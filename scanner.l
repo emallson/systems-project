@@ -1,3 +1,4 @@
+	enum{KEYWORD, VARIABLE, META, STRING, WORD}; 
 %{
 %}
 %option noyywrap
