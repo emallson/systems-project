@@ -1,43 +1,37 @@
-	enum{KEYWORD, VARIABLE, META, STRING, WORD}; 
 %{
+	#define YY_NO_INPUT
+	#include "parser.tab.h"
+	#include <string.h>
+	#include <stdlib.h>
+	void yyerror(char *s); 
 %}
 %option noyywrap
+%option nounput
 VARIABLE 	[$][A-Za-z0-9]*
 STRING 		["][A-Za-z0-9&+,:;?@|i=#<>.^*()%!`~\/-_" "-]*["]
-STRING2		(["]*)
 KEYWORD		(?:defprompt|cd|listjobs|bye|run|assignto|<bg>)
 META		[=|#]
 WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 %%
 
 [\t ]+		/* ignore whitespace */ ;
-["]+ 
-{KEYWORD}	{return KEYWORD; }
+"bye"           {return BYE;}
+"listjobs"      {return LISTJOBS; }
+"cd"            {return CD; }
+"defprompt"     {return DEFPROMPT; }
+"#".*           ;
+{KEYWORD}	{yylval.keyword = yytext; return KEYWORD; }
 
-{VARIABLE}	{return VARIABLE;} 
+{VARIABLE}	{yylval.variable = yytext; return VARIABLE;} 
 
-{META}		{return META; }
+{META}		{yylval.metachar = yytext; return META; }
 
-{STRING}	{return STRING; }
+{STRING}	{yylval.string = yytext; 
+		yylval.string = strdup(yytext); 
+		yylval.string++; 
+		yylval.string[strlen(yylval.string)-1] = '\0';
+		return STRING; }
 
-{WORD}		{return WORD; } 
-
+{WORD}		{yylval.word = yytext; return WORD; } 
+"\n"		{return NEWLINE;}
 %%
-
-int main (void) {
-        int result;
-        int running = 1;
-        while(running){
-                result = yylex();
-                switch(result){
-                        case KEYWORD:  printf ("Token Type: Keyword\t\t Token: %s \n", yytext); break;
-                        case VARIABLE: printf("Token Type: Variable\t\t Token: %s\n", yytext); break;
-                        case META:     printf("Token Type: Meta\t\t Token %s\n", yytext); break;
-                        case STRING:   printf("Token Type: String\t\t Token: %s\n", yytext); break;
-                        case WORD:     printf("Token Type: Word\t\t Token: %s\n", yytext); break;
-                        default: break;
-                }
-        }
-        return 0;
-}
-
