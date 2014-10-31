@@ -18,7 +18,7 @@ void yyerror(char *s);
 	char* metachar; 
 }; 
 
-%token DEFPROMPT CD LISTJOBS BYE NEWLINE
+%token LS DEFPROMPT CD LISTJOBS BYE NEWLINE
 %token <keyword> KEYWORD
 %token <variable> VARIABLE 
 %token <string> STRING
@@ -42,18 +42,22 @@ prompt:
 			}
 	; 
 command:
-	KEYWORD 	{printf("Token Type: keyword\t Token: %s\n", $1);}
-	| VARIABLE 	{printf("Token Type: variable\t Token: %s\n", $1);}
-	| STRING 	{printf("Token Type: string\t Token: %s\n", $1);}
-	| WORD		{printf("Token Type: word\t Token: %s\n", $1); }
-	| META		{printf("Token Type: metachar\t Token: %s\n", $1);}
-	| BYE		{builtInCmd(BYE, NULL, NULL);}	
+	DEFPROMPT STRING	{builtInCmd(DEFPROMPT, $2, NULL);}
+	|CD WORD		{builtInCmd(CD, $2, NULL);}
+	|KEYWORD 		{printf("Token Type: keyword\t Token: %s\n", $1);}
+	| VARIABLE 		{printf("Token Type: variable\t Token: %s\n", $1);}
+	| STRING 		{printf("Token Type: string\t Token: %s\n", $1);}
+	| WORD			{printf("Token Type: word\t Token: %s\n", $1); }
+	| META			{printf("Token Type: metachar\t Token: %s\n", $1);}
+	| BYE			{builtInCmd(BYE, NULL, NULL);}
+	| LS			{builtInCmd(LS, NULL, NULL); }
 	; 
 
 %%
 
 int main(void){
 	loadCommandPrompt();
+	printCommandPrompt(); 
 	yyparse(); 
 	return 0;
 }
