@@ -19,6 +19,7 @@ WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 "listjobs"      {return LISTJOBS; }
 "cd"            {return CD; }
 "defprompt"     {return DEFPROMPT; }
+"ls" 		{return LS;}
 "#".*           ;
 {KEYWORD}	{yylval.keyword = yytext; return KEYWORD; }
 
