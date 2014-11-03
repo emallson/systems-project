@@ -11,8 +11,8 @@ typedef struct arglist{
 typedef struct varlist{
 	struct varlist *next; 
 	struct varlist *prev; 
-	char varName[LIMIT]; 
-	char varVal[LIMIT]; 
+	char variable[LIMIT]; 
+	char value[LIMIT]; 
 } VARLIST; 
 
 #endif
