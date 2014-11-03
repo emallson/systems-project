@@ -18,12 +18,13 @@ void yyerror(char *s);
 	char* metachar; 
 }; 
 
-%token LS DEFPROMPT CD LISTJOBS BYE NEWLINE
+%token LS DEFPROMPT CD LISTJOBS BYE NEWLINE ASSIGN EQUAL COMMENT
 %token <keyword> KEYWORD
 %token <variable> VARIABLE 
 %token <string> STRING
 %token <word> WORD 
 %token <metachar> META 
+%type <string> command
 %%
 program: prompts
 	 |
@@ -43,16 +44,16 @@ prompt:
 	; 
 command:
 	DEFPROMPT STRING	{builtInCmd(DEFPROMPT, $2, NULL);}
+	|VARIABLE EQUAL WORD    {builtInCmd(EQUAL, $3, $1);}
+	|VARIABLE EQUAL STRING	{builtInCmd(EQUAL, $3, $1);}
 	|CD WORD		{builtInCmd(CD, $2, NULL);}
 	|KEYWORD 		{printf("Token Type: keyword\t Token: %s\n", $1);}
-	| VARIABLE 		{printf("Token Type: variable\t Token: %s\n", $1);}
-	| STRING 		{printf("Token Type: string\t Token: %s\n", $1);}
-	| WORD			{printf("Token Type: word\t Token: %s\n", $1); }
-	| META			{printf("Token Type: metachar\t Token: %s\n", $1);}
-	| BYE			{builtInCmd(BYE, NULL, NULL);}
-	| LS			{builtInCmd(LS, NULL, NULL); }
-	; 
-
+	|VARIABLE 		{printf("Token Type: variable\t Token: %s\n", $1);} 
+	|STRING 		{printf("Token Type: string\t Token: %s\n", $1);}   
+	|WORD			{printf("Token Type: word\t Token: %s\n", $1); } 
+	|BYE			{builtInCmd(BYE, NULL, NULL);}
+	|LS			{builtInCmd(LS, NULL, NULL); }
+	;
 %%
 
 int main(void){
