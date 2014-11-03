@@ -1,5 +1,6 @@
 %{
 	#define YY_NO_INPUT
+	#include "svsh_structs.h"
 	#include "parser.tab.h"
 	#include <string.h>
 	#include <stdlib.h>
@@ -15,13 +16,12 @@ WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 %%
 
 [\t ]+		/* ignore whitespace */ ;
-^bye           {return BYE;}
-^listjobs      {return LISTJOBS; }
-^cd            {return CD; }
+^bye            {return BYE;}
+^listjobs       {return LISTJOBS; }
+^cd             {return CD; }
 ^defprompt     	{return DEFPROMPT; }
-^ls 		{return LS;}
 \=		{return EQUAL;}
-\#		{return COMMENT;}
+#		{return COMMENT;}
 {KEYWORD}	{yylval.keyword = yytext; return KEYWORD; }
 
 {VARIABLE}	{yylval.variable = yytext; return VARIABLE;} 
@@ -32,6 +32,8 @@ WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 		yylval.string[strlen(yylval.string)-1] = '\0';
 		return STRING; }
 
-{WORD}		{yylval.word = yytext; return WORD; } 
+{WORD}		{yylval.word = yytext; 
+		yylval.string = strdup(yytext); 	
+		return WORD; } 
 "\n"		{return NEWLINE;}
 %%
