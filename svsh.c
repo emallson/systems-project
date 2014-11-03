@@ -2,11 +2,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/wait.h>
 #include "svsh_structs.h"
 #include "svsh.h"
 #include "parser.tab.h"
 
 static char* prompt; 
+extern VARLIST* varlist; 
 
 void loadCommandPrompt(){
 	prompt = "svsh > "; 
@@ -72,4 +78,58 @@ void builtInCmd(int command, char* string, char* variable){
 	}
 }
 
+void userCommand(ARGLIST* arglist, char* input, char* output){
+	int arg_size = 0; 
+	int var_size = 0;
+	ARGLIST* arg_it = arglist; 
+	while(arg_it != NULL){
+		arg_size++; 
+		arg_it = arg_it->next; 
+	} 
+	
+	char **argv = malloc(sizeof(arg_size+1) * sizeof(char[LIMIT])); 
+	arg_it = arglist; 
+	int i = 0; 
+	while(arg_it != NULL){
+		argv[i] = arg_it->args; 
+		arg_it = arg_it->next; 
+		i++; 
+	}
+	argv[i] = NULL; 
+	VARLIST* var_it = varlist;
+	
+	while(var_it !=NULL){
+		var_size++; 
+		var_it = var_it->next; 
+	}
+	char** vars = malloc(sizeof(var_size+1) * sizeof(char*)); 
+	var_it = varlist; 
+	i = 0; 
+	while(var_it != NULL){
+		vars[i] = malloc((2*LIMIT)+1); 
+		strncpy(vars[i], var_it->variable, (2*LIMIT+3)); 
+		strcat(vars[i], "="); 
+		strcat(vars[i], var_it->value); 
+		var_it->next; 
+		i++;
+	}
+	vars[i] = NULL;
 
+	pid_t pid; 
+	int state; 
+	
+	if((pid = fork()) == 0){
+		execvp(argv[0], argv); 
+		exit(1); 
+	/*	if(execve(argv[0], argv, vars) < 0){
+			printf("%s\n", argv[0]); 
+			printf("%s: command not found\n", argv[0]); 
+			exit(0); 
+		} */
+	}
+	if(waitpid(pid, &state, 0) < 0){
+		perror("WAITPID"); 
+		kill(pid, SIGKILL); 
+	}
+	free(argv);  
+}
