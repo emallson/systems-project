@@ -10,7 +10,7 @@
 %option nounput
 VARIABLE 	\$[A-Z0-9a-z]+
 STRING 		["][A-Za-z0-9&+,:;?@|i=#<>.^*()%!`~\/-_" "-]*["]
-KEYWORD		(?:defprompt|cd|listjobs|bye|run|assignto|<bg>)
+KEYWORD		(?:listjobs|run|assignto|<bg>)
 META		[=|#]
 WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 %%
@@ -26,14 +26,18 @@ WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 
 {VARIABLE}	{yylval.variable = yytext; return VARIABLE;} 
 
-{STRING}	{yylval.string = yytext; 
-		yylval.string = strdup(yytext); 
-		yylval.string++; 
-		yylval.string[strlen(yylval.string)-1] = '\0';
-		return STRING; }
+{STRING}	{
+			yylval.string = yytext; 
+			yylval.string = strdup(yytext); 
+			yylval.string++; 
+			yylval.string[strlen(yylval.string)-1] = '\0';
+			return STRING;
+		 }
 
-{WORD}		{yylval.word = yytext; 
-		yylval.string = strdup(yytext); 	
-		return WORD; } 
+{WORD}		{
+			yylval.word = yytext; 
+			yylval.string = strdup(yytext); 	
+			return WORD; 
+		} 
 "\n"		{return NEWLINE;}
 %%
