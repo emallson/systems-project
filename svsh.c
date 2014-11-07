@@ -104,6 +104,8 @@ void userCommand(ARGLIST* arglist, char* input, char* output){
 	int arg_size = 0;
 	int var_size = 0;
 	ARGLIST* arg_it = arglist;
+    VARLIST* head = varlist, *var = varlist;
+
 	while(arg_it != NULL){
 		arg_size++;
 		arg_it = arg_it->next;
@@ -114,6 +116,11 @@ void userCommand(ARGLIST* arglist, char* input, char* output){
 	int i = 0;
 	while(arg_it != NULL){
 		argv[i] = arg_it->args;
+        while(var != NULL) {
+            strsubst(argv[i], var->variable, var->value);
+            var = var->next;
+        }
+        var = head;
 		arg_it = arg_it->next;
 		i++;
 	}
