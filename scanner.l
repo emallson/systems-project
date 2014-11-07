@@ -4,12 +4,12 @@
 	#include "parser.tab.h"
 	#include <string.h>
 	#include <stdlib.h>
-	void yyerror(char *s); 
+	void yyerror(char *s);
 %}
 %option noyywrap
 %option nounput
 VARIABLE 	\$[A-Z0-9a-z]+
-STRING 		["][A-Za-z0-9&+,:;?@|i=#<>.^*()%!`~\/-_" "-]*["]
+STRING 		["][$A-Za-z0-9&+,:;?@|i=#<>.^*()%!`~\/-_" "-]*["]
 KEYWORD		(?:listjobs|run|assignto|<bg>)
 META		[=|#]
 WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
@@ -24,20 +24,20 @@ WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 #		{return COMMENT;}
 {KEYWORD}	{yylval.keyword = yytext; return KEYWORD; }
 
-{VARIABLE}	{yylval.variable = yytext; return VARIABLE;} 
+{VARIABLE}	{yylval.variable = yytext; return VARIABLE;}
 
 {STRING}	{
-			yylval.string = yytext; 
-			yylval.string = strdup(yytext); 
-			yylval.string++; 
+			yylval.string = yytext;
+			yylval.string = strdup(yytext);
+			yylval.string++;
 			yylval.string[strlen(yylval.string)-1] = '\0';
 			return STRING;
 		 }
 
 {WORD}		{
-			yylval.word = yytext; 
-			yylval.string = strdup(yytext); 	
-			return WORD; 
-		} 
+			yylval.word = yytext;
+			yylval.string = strdup(yytext);
+			return WORD;
+		}
 "\n"		{return NEWLINE;}
 %%
