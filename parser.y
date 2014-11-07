@@ -50,27 +50,32 @@ command:
 	DEFPROMPT arg		{builtInCmd(DEFPROMPT, $2, NULL);}
 	|VARIABLE EQUAL arg     {builtInCmd(EQUAL, $3, $1);}
 	|CD WORD		{builtInCmd(CD, $2, NULL);}
-	|BYE			{builtInCmd(BYE, NULL, NULL);}
-	|COMMENT arg		{}
+	|BYE			{builtInCmd(BYE, NULL, NULL);} 
+	|COMMENT user		{yyerrok; 
+				 yyclearin; 
+				 printCommandPrompt();}
 	|user			{userCommand($1, NULL, NULL);}
 	;
 arg:
-	WORD			{$$ = $1;}
-	|STRING			{$$ = $1;}
-	;
+        WORD                    {$$ = $1;}
+        |STRING                 {$$ = $1;}
+        ;
 user:
-	KEYWORD arglist	{
-				$$ = constructArglist($1, $2);	
-			}
-	|KEYWORD	{
-				$$ = constructArglist($1, NULL); 
-			}
-	|WORD		{
-				$$ = constructArglist($1, NULL); 
-			}
-	|WORD arglist   {
-				$$ = constructArglist($1, $2); 
-			}
+	KEYWORD WORD arglist	{
+					$$ = constructArglist($2, $3);	
+				}
+	|KEYWORD WORD		{
+					$$ = constructArglist($2, NULL); 
+				}
+	|KEYWORD		{
+					$$ = constructArglist($1, NULL); 
+				}
+	|WORD			{
+					$$ = constructArglist($1, NULL); 
+				}
+	|WORD arglist  	 	{
+					$$ = constructArglist($1, $2); 
+				}
 	;
 arglist:
 	WORD arglist	{$$ = constructArglist($1, $2);}
