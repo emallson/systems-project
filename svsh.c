@@ -88,13 +88,15 @@ void strsubst(char* source, char* sub, char* repl) {
 
     char* beg, *end, *tmp;
 
-    tmp = (char*)malloc(src_len * sizeof(char));
+    tmp = (char*)malloc(sizeof(char[LIMIT]));
 
     while((beg = strstr(source, sub))) {
         end = beg + sub_len;
-        strcpy(tmp, end);
-        strcpy(beg, repl);
-        strcpy(beg + repl_len, tmp);
+        strncpy(tmp, end, LIMIT);
+        /* the remaining space in the buffer is LIMIT - (beg - source) */
+        strncpy(beg, repl, LIMIT - (beg - source));
+        /* again, copy at most remaining space in buffer */
+        strncpy(beg + repl_len, tmp, LIMIT - (beg + repl_len - source));
     }
 
     free(tmp);
@@ -125,24 +127,6 @@ void userCommand(ARGLIST* arglist, char* input, char* output){
 		i++;
 	}
 	argv[i] = NULL;
-//	VARLIST* var_it = varlist;
-
-//	while(var_it !=NULL){
-//		var_size++;
-//		var_it = var_it->next;
-//	}
-//	char** vars = malloc(sizeof(var_size+1) * sizeof(char*));
-//	var_it = varlist;
-//	i = 0;
-//	while(var_it != NULL){
-//		vars[i] = malloc((2*LIMIT)+1);
-//		strncpy(vars[i], var_it->variable, (2*LIMIT+3));
-//		strcat(vars[i], "=");
-//		strcat(vars[i], var_it->value);
-//		var_it->next;
-//		i++;
-//	}
-//	vars[i] = NULL;
 
 	pid_t pid;
 	int state;
