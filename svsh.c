@@ -71,6 +71,7 @@ void addToJobList(pid_t pid, char* name) {
     pidlist_node* node = malloc(sizeof(pidlist_node));
     node->pid = pid;
     node->name = strdup(name);
+
     if(joblist.tail) {
         joblist.tail->next = node;
     }
@@ -82,11 +83,67 @@ void addToJobList(pid_t pid, char* name) {
     joblist.length++;
 }
 
+void removeJob(pidlist_node* job, pidlist_node* prev) {
+    if(joblist.head == job) {
+        joblist.head = job->next;
+    }
+    if(joblist.tail == job) {
+        joblist.tail = prev;
+    }
+    if(prev) {
+        prev->next = job->next;
+    }
+    free(job->name);
+    free(job);
+    joblist.length--;
+}
+
+void pprint_state(int state) {
+    if(WIFEXITED(state)) {
+        printf("[Exited: %d]", WEXITSTATUS(state));
+    }
+    if(WIFSIGNALED(state)) {
+        printf("[Signaled: %d", WTERMSIG(state));
+        #ifdef WCOREDUMP
+        if(WCOREDUMP(state)) {
+            printf(" with core dump");
+        }
+        #endif
+        printf("]");
+    }
+    /* right now this can only happen if an external command is run to stop the
+       process. There is no shell behavior to stop a process. */
+    if(WIFSTOPPED(state)) {
+        printf("[Stopped: %d]", WSTOPSIG(state));
+    }
+    if(WIFCONTINUED(state)) {
+        printf("[Continued]");
+    }
+}
+
 void printJobList() {
-    pidlist_node* current = joblist.head;
+    pidlist_node* prev = NULL, *current = joblist.head;
     while(current != NULL) {
-        printf("%d: %s\n", current->pid, current->name);
-        current = current->next;
+        int state;
+
+        printf("%d: %s ", current->pid, current->name);
+        pid_t state_changed = waitpid(current->pid, &state,
+                                      WNOHANG | WUNTRACED | WCONTINUED);
+        if(state_changed) {
+            pprint_state(state);
+        }
+        printf("\n");
+
+        /* remove a job from the list if it has terminated */
+        if(state_changed && (WIFEXITED(state) || WIFSIGNALED(state))) {
+            pidlist_node* job = current;
+            current = current->next;
+            removeJob(job, prev);
+        } else {
+            prev = current;
+            current = current->next;
+        }
+
     }
 }
 
