@@ -102,18 +102,17 @@ void strsubst(char* source, char* sub, char* repl) {
     free(tmp);
 }
 
-void userCommand(ARGLIST* arglist, char* input, char* output){
-	int arg_size = 0;
-	int var_size = 0;
-	ARGLIST* arg_it = arglist;
+char** build_argv(ARGLIST* arglist) {
     VARLIST* head = varlist, *var = varlist;
+	ARGLIST* arg_it = arglist;
+	int arg_size = 0;
 
 	while(arg_it != NULL){
 		arg_size++;
 		arg_it = arg_it->next;
 	}
 
-	char **argv = malloc(sizeof(arg_size+1) * sizeof(char[LIMIT]));
+    char **argv = malloc(sizeof(arg_size+1) * sizeof(char[LIMIT]));
 	arg_it = arglist;
 	int i = 0;
 	while(arg_it != NULL){
@@ -123,13 +122,53 @@ void userCommand(ARGLIST* arglist, char* input, char* output){
             var = var->next;
         }
         var = head;
+        printf("argv[%d] = %s\n", i, argv[i]);
 		arg_it = arg_it->next;
 		i++;
 	}
 	argv[i] = NULL;
 
+    return argv;
+}
+
+void assignCommand(char* varname, ARGLIST* arglist) {
+  pid_t pid;
+  int state;
+  /* file descriptor to pipe data from command */
+  int fd[2];
+
+  printf("assignto: %s\n", varname);
+
+  char** argv = build_argv(arglist);
+  char* output = (char*)malloc(sizeof(char[LIMIT]));
+
+  pipe(fd);
+  if((pid = fork()) == 0) {
+    dup2(fd[1], STDOUT_FILENO);
+    execvp(argv[0], argv);
+    exit(1);
+  }
+  if(waitpid(pid, &state, 0) < 0) {
+    perror("WAITPID");
+    kill(pid, SIGKILL);
+  }
+
+  printf("assigning to var %s ", varname);
+  /* read the output into a variable */
+  read(fd[0], output, LIMIT);
+  output[LIMIT-1] = '\0';
+  printf("value: %s\n", output);
+  addToVarList(varname, output);
+  free(argv);
+}
+
+void runCommand(ARGLIST* arglist) {
 	pid_t pid;
 	int state;
+
+    printf("run!\n");
+
+    char** argv = build_argv(arglist);
 
 	if((pid = fork()) == 0){
 		execvp(argv[0], argv);

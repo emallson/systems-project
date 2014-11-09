@@ -12,7 +12,7 @@ VARIABLE 	\$[A-Z0-9a-z]+
 STRING 		["][$A-Za-z0-9&+,:;?@|i=#<>.^*()%!`~\/-_" "-]*["]
 KEYWORD		(?:listjobs|run|assignto|<bg>)
 META		[=|#]
-WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
+WORD		[a-zA-Z0-9&+,:;?@|<>.^*()%!`~\/-_-]+
 %%
 
 [\t ]+		/* ignore whitespace */ ;
@@ -20,11 +20,13 @@ WORD		[a-zA-Z0-9&+,:;?@|'<>.^*()%!`~\/-_-]+
 ^listjobs       {return LISTJOBS; }
 ^cd             {return CD; }
 ^defprompt     	{return DEFPROMPT; }
+^run            {return RUN; }
+^assignto       {return ASSIGNTO; }
 \=		{return EQUAL;}
 #		{return COMMENT;}
 {KEYWORD}	{yylval.keyword = yytext; return KEYWORD; }
 
-{VARIABLE}	{yylval.variable = yytext; return VARIABLE;}
+{VARIABLE}	{yylval.variable = strdup(yytext); return VARIABLE;}
 
 {STRING}	{
 			yylval.string = yytext;
