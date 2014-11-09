@@ -20,7 +20,7 @@ ARGLIST* constructArglist(char* arg, ARGLIST* arglist);
 	ARGLIST* arg_list;
 };
 
-%token LS DEFPROMPT CD LISTJOBS BYE NEWLINE ASSIGNTO RUN EQUAL COMMENT
+%token LS DEFPROMPT CD LISTJOBS BYE NEWLINE ASSIGNTO RUN EQUAL COMMENT BG
 %token <keyword> KEYWORD
 %token <variable> VARIABLE
 %token <string> STRING
@@ -54,9 +54,12 @@ command:
 	|COMMENT arglist {yyerrok;
 				 yyclearin;
 				 printCommandPrompt();}
+    |LISTJOBS {printJobList();}
 	|ASSIGNTO VARIABLE arglist {assignCommand($2, $3);}
-	|RUN arglist {runCommand($2);}
-    |arglist {runCommand($1);}
+	|RUN arglist BG {runCommand($2, 1);}
+	|arglist BG {runCommand($1, 1);}
+	|RUN arglist {runCommand($2, 0);}
+	|arglist {runCommand($1, 0);}
 	;
 arg:
         WORD                    {$$ = $1;}
@@ -76,7 +79,7 @@ ARGLIST* constructArglist(char* arg, ARGLIST* arglist){
 	return arglist;
 }
 int main(void){
-	loadCommandPrompt();
+    svshInit();
 	printCommandPrompt();
 	yyparse();
 	return 0;

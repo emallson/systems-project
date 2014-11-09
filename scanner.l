@@ -22,6 +22,7 @@ WORD		[a-zA-Z0-9&+,:;?@|<>.^*()%!`~\/-_-]+
 ^defprompt     	{return DEFPROMPT; }
 ^run            {return RUN; }
 ^assignto       {return ASSIGNTO; }
+"<bg>"			{return BG; }
 \=		{return EQUAL;}
 #		{return COMMENT;}
 {KEYWORD}	{yylval.keyword = yytext; return KEYWORD; }

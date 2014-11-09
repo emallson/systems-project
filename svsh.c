@@ -14,12 +14,29 @@
 static char* prompt;
 extern VARLIST* varlist;
 
-void loadCommandPrompt(){
+typedef struct pidlist_node_struct {
+    pid_t pid;
+    char* name;
+    struct pidlist_node_struct* next;
+} pidlist_node;
+
+typedef struct pidlist_struct {
+    pidlist_node* head, *tail;
+    size_t length;
+} pidlist;
+
+pidlist joblist;
+
+void svshInit(){
+    joblist.head = joblist.tail = NULL;
+    joblist.length = 0;
 	prompt = "svsh > ";
 }
+
 void printCommandPrompt(void){
 	printf("%s", prompt);
 }
+
 void addToVarList(char * variable, char * value){
 	VARLIST * current = varlist;
 	int exists = 0;
@@ -41,6 +58,7 @@ void addToVarList(char * variable, char * value){
 		varlist = new_entry;
 	}
 }
+
 void printVarlist(){
 	VARLIST * current = varlist;
 	while(current != NULL){
@@ -48,6 +66,30 @@ void printVarlist(){
 		current = current->next;
 	}
 }
+
+void addToJobList(pid_t pid, char* name) {
+    pidlist_node* node = malloc(sizeof(pidlist_node));
+    node->pid = pid;
+    node->name = strdup(name);
+    if(joblist.tail) {
+        joblist.tail->next = node;
+    }
+    joblist.tail = node;
+
+    if(!joblist.head) {
+        joblist.head = node;
+    }
+    joblist.length++;
+}
+
+void printJobList() {
+    pidlist_node* current = joblist.head;
+    while(current != NULL) {
+        printf("%d: %s\n", current->pid, current->name);
+        current = current->next;
+    }
+}
+
 void builtInCmd(int command, char* string, char* variable){
 	char cwd[1024];
 	switch(command){
@@ -157,7 +199,7 @@ void assignCommand(char* varname, ARGLIST* arglist) {
   free(argv);
 }
 
-void runCommand(ARGLIST* arglist) {
+void runCommand(ARGLIST* arglist, int background) {
 	pid_t pid;
 	int state;
 
@@ -172,9 +214,13 @@ void runCommand(ARGLIST* arglist) {
 			exit(0);
 		} */
 	}
-	if(waitpid(pid, &state, 0) < 0){
-		perror("WAITPID");
-		kill(pid, SIGKILL);
-	}
+    if(background) {
+        addToJobList(pid, argv[0]);
+    } else {
+        if(waitpid(pid, &state, 0) < 0){
+            perror("WAITPID");
+            kill(pid, SIGKILL);
+        }
+    }
 	free(argv);
 }
