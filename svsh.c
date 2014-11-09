@@ -122,7 +122,6 @@ char** build_argv(ARGLIST* arglist) {
             var = var->next;
         }
         var = head;
-        printf("argv[%d] = %s\n", i, argv[i]);
 		arg_it = arg_it->next;
 		i++;
 	}
@@ -136,8 +135,6 @@ void assignCommand(char* varname, ARGLIST* arglist) {
   int state;
   /* file descriptor to pipe data from command */
   int fd[2];
-
-  printf("assignto: %s\n", varname);
 
   char** argv = build_argv(arglist);
   char* output = (char*)malloc(sizeof(char[LIMIT]));
@@ -153,11 +150,9 @@ void assignCommand(char* varname, ARGLIST* arglist) {
     kill(pid, SIGKILL);
   }
 
-  printf("assigning to var %s ", varname);
   /* read the output into a variable */
   read(fd[0], output, LIMIT);
   output[LIMIT-1] = '\0';
-  printf("value: %s\n", output);
   addToVarList(varname, output);
   free(argv);
 }
@@ -165,8 +160,6 @@ void assignCommand(char* varname, ARGLIST* arglist) {
 void runCommand(ARGLIST* arglist) {
 	pid_t pid;
 	int state;
-
-    printf("run!\n");
 
     char** argv = build_argv(arglist);
 
