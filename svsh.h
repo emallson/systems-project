@@ -10,5 +10,5 @@ void builtInCmd(int command, char* string, char* variable);
 void userCommand(ARGLIST *arglist, char *input, char *output); 
 
 VARLIST * varlist; 
-
+TOKENLIST* tokenlist; 
 #endif

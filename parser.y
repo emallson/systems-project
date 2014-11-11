@@ -9,6 +9,8 @@ extern void builtInCmd(int command, char* string, char* variable);
 extern void userCommand(ARGLIST *arglist, char *input, char *output);
 int yylex(void);
 void yyerror(char *s);
+static int argcount = 0; 
+char argtoken[6];
 ARGLIST* constructArglist(char* arg, ARGLIST* arglist);
 %}
 %union{
@@ -38,7 +40,7 @@ prompts:
  	| prompts prompt
 	;
 prompt:
-	command NEWLINE	{printCommandPrompt();}
+	command NEWLINE	{printTokenList(); printCommandPrompt();}
 	| command prompt
 	| error NEWLINE	{
 				yyerrok;
@@ -47,28 +49,95 @@ prompt:
 			}
 	;
 command:
-	DEFPROMPT arg		{builtInCmd(DEFPROMPT, $2, NULL);}
-	|VARIABLE EQUAL arg     {builtInCmd(EQUAL, $3, $1);}
-	|CD WORD		{builtInCmd(CD, $2, NULL);}
+	DEFPROMPT WORD		{
+					addToTokenList("word", $2, "anytext"); 
+					addToTokenList("keyword", "defprompt", "defprompt"); 
+					builtInCmd(DEFPROMPT, $2, NULL);
+				}
+        |DEFPROMPT STRING       {
+                                        addToTokenList("string", $2, "anytext");
+                                        addToTokenList("keyword", "defprompt", "defprompt");
+					builtInCmd(DEFPROMPT, $2, NULL);
+                                }
+	|VARIABLE EQUAL WORD    {
+					addToTokenList("word", $3, "variable_def"); 
+					addToTokenList("metachar", "=", "assignment");
+					addToTokenList("word", $1, "variable_name"); 
+					builtInCmd(EQUAL, $3, $1);
+				}
+        |VARIABLE EQUAL STRING  {
+                                        addToTokenList("string", $3, "variable_def");
+                                        addToTokenList("metachar", "=", "assignment");
+                                        addToTokenList("word", $1, "variable_name");
+                                        builtInCmd(EQUAL, $3, $1);
+                                }
+	|CD WORD		{
+					addToTokenList("word", $2, "directory"); 
+					addToTokenList("keyword", "cd", "change directory"); 
+					builtInCmd(CD, $2, NULL);
+				}
 	|BYE			{builtInCmd(BYE, NULL, NULL);}
-	|COMMENT arglist {yyerrok;
-				 yyclearin;
-				 printCommandPrompt();}
-    |LISTJOBS {printJobList();}
+	|COMMENT arglist 	{
+				 	yyerrok;
+				 	yyclearin;
+				}
+	|LISTJOBS 		{printJobList();}
+
 	|ASSIGNTO VARIABLE arglist {assignCommand($2, $3);}
-	|RUN arglist BG {runCommand($2, 1);}
-	|arglist BG {runCommand($1, 1);}
-	|RUN arglist {runCommand($2, 0);}
-	|arglist {runCommand($1, 0);}
+
+	|RUN arglist BG 	{
+					runCommand($2, 1);
+				}
+	|arglist BG 		{
+					runCommand($1, 1);
+				}
+	|RUN arglist 		{
+					argcount = 0; 
+					addToTokenList("keyword", "run", "run");
+					runCommand($2, 0);
+				}
+	|arglist 		{
+					argcount = 0; 
+					runCommand($1, 0);
+				}
 	;
 arg:
-        WORD                    {$$ = $1;}
-        |STRING                 {$$ = $1;}
-		|VARIABLE				{$$ = $1;}
+        WORD                    {
+					sprintf(argtoken, "arg %d", argcount);
+					addToTokenList("word", $1, argtoken);
+					argcount++;  
+					$$ = $1;
+				}
+        |STRING                 {
+			 		sprintf(argtoken, "arg %d", argcount);
+                                        addToTokenList("string", $1, argtoken);
+                                        argcount++;
+					$$ = $1;
+				}
+	|VARIABLE		{
+					sprintf(argtoken, "arg %d", argcount); 
+					addToTokenList("variable", $1, argtoken);
+					argcount++; 
+					$$ = $1;
+				}
+	|EQUAL			{
+					sprintf(argtoken, "arg %d", argcount); 
+					addToTokenList("metachar", "=", argtoken); 
+					argcount++; 
+				}
+	|COMMENT		{
+					sprintf(argtoken, "arg %d", argcount); 
+					addToTokenList("metachar", "#", argtoken); 
+					argcount++; 
+				}
         ;
 arglist:
-	arg arglist {$$ = constructArglist($1, $2);}
-	|arg {$$ = constructArglist($1, NULL);}
+	arg arglist 		{
+					$$ = constructArglist($1, $2);
+				}
+	|arg 			{
+					$$ = constructArglist($1, NULL);
+				}
 	;
 %%
 ARGLIST* constructArglist(char* arg, ARGLIST* arglist){
@@ -79,7 +148,7 @@ ARGLIST* constructArglist(char* arg, ARGLIST* arglist){
 	return arglist;
 }
 int main(void){
-    svshInit();
+    	svshInit();
 	printCommandPrompt();
 	yyparse();
 	return 0;

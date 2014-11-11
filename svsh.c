@@ -13,7 +13,8 @@
 
 static char* prompt;
 extern VARLIST* varlist;
-
+extern TOKENLIST* tokenlist; 
+static int argcount = 0;
 typedef struct pidlist_node_struct {
     pid_t pid;
     char* name;
@@ -28,15 +29,44 @@ typedef struct pidlist_struct {
 pidlist joblist;
 
 void svshInit(){
-    joblist.head = joblist.tail = NULL;
-    joblist.length = 0;
+    	joblist.head = joblist.tail = NULL;
+    	joblist.length = 0;
 	prompt = "svsh > ";
 }
 
 void printCommandPrompt(void){
 	printf("%s", prompt);
 }
-
+void addToTokenList(char* type, char* token, char* usage){
+	if(strcmp(usage, "variable_name") == 0)
+		token = strtok(token, " ");
+	else if(strcmp(usage, "arg 0") == 0){
+		usage = "cmd"; 
+	}
+        TOKENLIST* new_entry = malloc(sizeof(TOKENLIST));
+        strncpy(new_entry->type, type, sizeof(new_entry->type));
+        strncpy(new_entry->token, token, sizeof(new_entry->token));
+        strncpy(new_entry->usage, usage, sizeof(new_entry->usage));
+        new_entry->next  = tokenlist;
+        tokenlist = new_entry;
+}
+void clearTokenList(TOKENLIST* head){
+	TOKENLIST* current = head->next; 
+	TOKENLIST* next_item; 
+	while(current != NULL){
+		next_item = current->next; 
+		free(current); 
+		current = next_item; 
+	}
+	head->next = NULL; 
+}
+void printTokenList(){
+        TOKENLIST* current = tokenlist;
+        while(current != NULL){
+                printf("Token Type: %15s\t Token: %15s\t Usage: %15s\n",current->type, current->token, current->usage);
+		current = current->next;
+        }
+}
 void addToVarList(char * variable, char * value){
 	VARLIST * current = varlist;
 	int exists = 0;

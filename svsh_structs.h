@@ -15,4 +15,10 @@ typedef struct varlist{
 	char value[LIMIT]; 
 } VARLIST; 
 
+typedef struct tokenlist{
+	struct tokenlist *next; 
+	char type[LIMIT]; 
+	char token[LIMIT]; 
+	char usage[LIMIT]; 
+} TOKENLIST; 
 #endif
