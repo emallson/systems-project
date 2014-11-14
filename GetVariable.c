@@ -1,6 +1,6 @@
 #pragma once
-#include <linux/linkage.h> 
-#include <linux/kernel.h> 
+#include <linux/linkage.h>
+#include <linux/kernel.h>
 #include <asm/uaccess.h>
 #include "Globals.h"
 
@@ -41,9 +41,9 @@ asmlinkage int sys_GetVariable(char __user *VariableName, char __user *VariableD
 		printk(KERN_EMERG "SaveVariable has failed: copy_from_user() (definition) error \n");
 		return(-1);
 	}
-	
+
 	// ALWAYS null terminate the stupid string.....another 2 hours of compiling because of this
-	TempBuffer[VariableLength - 1] = '\0';
+	TempBuffer[VariableLength] = '\0';
 
 	//debug
 	printk(KERN_EMERG "The current TempBuffer: %s \n", TempBuffer);
@@ -62,7 +62,7 @@ asmlinkage int sys_GetVariable(char __user *VariableName, char __user *VariableD
 		strncpy(CurrentStoredVariable, VariableStorage[TempNum], VariableLength);
 
 		// ALWAYS null terminate it
-		CurrentStoredVariable[VariableLength - 1] = '\0';
+		CurrentStoredVariable[VariableLength] = '\0';
 
 		//debug
 		printk(KERN_EMERG "What was temporarily copied: %s \n", CurrentStoredVariable);
@@ -73,7 +73,7 @@ asmlinkage int sys_GetVariable(char __user *VariableName, char __user *VariableD
 			// if you come into this if statement, theyre the same variable. Load in the variables into
 			// the appropriate buffers
 
-			// we have a valid definition length, we now know how many bytes to copy. copy it back to USER SPACE		
+			// we have a valid definition length, we now know how many bytes to copy. copy it back to USER SPACE
 			copy_to_user(VariableDefinition, VariableDefinitions[TempNum], DefinitionLength);
 
 			// ALWAYS NULL TERMINATE....stupid bugs....
@@ -92,4 +92,3 @@ asmlinkage int sys_GetVariable(char __user *VariableName, char __user *VariableD
 	// if you make it here, the variable was not found. Return a -1
 	return (-1);
 }
-

@@ -24,7 +24,7 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 
 	// get the size of the passed in buffer to make sure its not longer than our declared buffer
 	int PreviousNameSize = strlen(PreviousName);
-	
+
 	// error checking
 	if (PreviousNameSize < 0 || PreviousNameSize > MAX_BUF_SIZE)
 	{
@@ -48,7 +48,7 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 		printk(KERN_EMERG "Length of the passed in buffer, DefinitionLength,  is too big or too small. The buffer size: %d", DefinitionLength);
 		return (-2);
 	}
-	
+
 	// since we have an adequate buffer size across the board. copy the stuff over
 
 	// create a buffer to store PreviousName in
@@ -58,12 +58,12 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 	copy_from_user(PreviousBuffer, PreviousName, PreviousNameSize);
 
 	// Null terminate. Holy crap i missed alot of these...
-	PreviousBuffer[PreviousNameSize - 1] = '\0';
+	PreviousBuffer[PreviousNameSize] = '\0';
 
 	//debug
 	printk(KERN_EMERG "The variable was saved into kernel space. What was saved: %s \n", PreviousBuffer);
-	
-	
+
+
 	// we now have the previous variable stored in a buffer. now its time to search through the list and see where we stand.
 
 
@@ -77,18 +77,18 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 
 	// so there is at least ONE variable in the list. return it
 
-	// if they are the SAME, return the first in the definition and saved variables 
+	// if they are the SAME, return the first in the definition and saved variables
 	if (!(strcmp(PreviousBuffer, "")))
 	{
 		char TempVariableStorage[MAX_BUF_SIZE];
 		char TempDefinitionStorage[MAX_BUF_SIZE];
-		
+
 		//debug
 		printk(KERN_EMERG "The previous buffer was empty, indicating we want to start at the beggining. \n");
 
 		// now this should be quick and simple, since we know we have valid lengths, just copy them into the buffers
 		// plain and simple
-		
+
 		// do the copy!!
 		strncpy(TempVariableStorage, VariableStorage[0], VariableLength);
 		TempVariableStorage[VariableLength - 1] = '\0';
@@ -122,7 +122,7 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 
 			// now this should be quick and simple, since we know we have valid lengths, just copy them into the buffers
 			// plain and simple
-		
+
 			//debug
 			printk(KERN_EMERG "Previous varable found! Returning next variable at location: %d unless it is the end of the list. \n", LCV + 1);
 
@@ -150,11 +150,11 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 	}
 
 	// if you make it here, you screwed up somehow....
-	
+
 	//debug
-	printk(KERN_EMERG "Somewhere, something went wrong. The variables passed in are; PreviousVariable: %s, VariableLength: %d, DefinitionLength: %d \n", 
+	printk(KERN_EMERG "Somewhere, something went wrong. The variables passed in are; PreviousVariable: %s, VariableLength: %d, DefinitionLength: %d \n",
 		PreviousName, VariableLength, DefinitionLength);
-		
+
 	// careful, -2 is a null attribute value but also indicates failure in this case
 	return (-2);
 }

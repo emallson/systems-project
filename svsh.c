@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -10,10 +11,207 @@
 #include "svsh_structs.h"
 #include "svsh.h"
 #include "parser.tab.h"
+#include "Globals.h"
 
 #define __NR_SaveVariable 315
 #define __NR_GetVariable 316
 #define __NR_NextVariable 317
+
+#ifdef KERNEL_DEBUG
+#define MAX_BUF_SIZE 256
+#define MAX_STORAGE_SIZE 20
+#define NULL_ATTRIBUTE_LENGTH -2
+char VariableDefinitions[MAX_STORAGE_SIZE][MAX_BUF_SIZE];
+int VariableDefinitionsLength[MAX_STORAGE_SIZE] = {-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2 -2};
+char VariableStorage[MAX_STORAGE_SIZE][MAX_BUF_SIZE];
+int StoredVariables;
+int VariableStorageLength[MAX_STORAGE_SIZE] = {-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2};
+char VariableDefinitions[MAX_STORAGE_SIZE][MAX_BUF_SIZE];
+
+int sys_NextVariable(char  *PreviousName, char  *Variable, int VariableLength, char  *VariableDefinition, int DefinitionLength) {
+	int PreviousNameSize = strlen(PreviousName);
+	if (PreviousNameSize < 0 || PreviousNameSize > MAX_BUF_SIZE)
+	{
+		// debug
+		return (-2);
+	}
+	if (VariableLength < 0 || VariableLength > MAX_BUF_SIZE)
+	{
+		// debug
+		return (-2);
+	}
+	if (DefinitionLength < 0 || DefinitionLength > MAX_BUF_SIZE)
+	{
+		// debug
+		return (-2);
+	}
+	char PreviousBuffer[MAX_BUF_SIZE];
+	strncpy(PreviousBuffer, PreviousName, PreviousNameSize);
+	PreviousBuffer[PreviousNameSize] = '\0';
+	if (StoredVariables == 0)
+{
+		// no variables are stored. Return a -1 to indicate the end of the list
+		return (-1);
+	}
+	if (!(strcmp(PreviousBuffer, "")))
+{
+		char TempVariableStorage[MAX_BUF_SIZE];
+		char TempDefinitionStorage[MAX_BUF_SIZE];
+
+		//debug
+
+		// now this should be quick and simple, since we know we have valid lengths, just copy them into the buffers
+		// plain and simple
+
+		// do the copy!!
+		strncpy(TempVariableStorage, VariableStorage[0], VariableLength);
+		TempVariableStorage[VariableLength - 1] = '\0';
+		strncpy(Variable, TempVariableStorage, VariableLength);
+
+		strncpy(TempDefinitionStorage, VariableDefinitions[0], DefinitionLength);
+		TempDefinitionStorage[DefinitionLength - 1] = '\0';
+		strncpy(VariableDefinition, TempDefinitionStorage, DefinitionLength);
+
+		return (0);
+	}
+	int LCV;
+	for (LCV = 0; LCV < StoredVariables; LCV++)
+{
+		//debug
+
+		// compare the string to the current place (LCV) in the loop.
+		// if it is the SAME. We found the spot we were at. If not, carry on
+		if (!(strcmp(PreviousBuffer, VariableStorage[LCV])))
+		{
+			char TempVariableStorage[MAX_BUF_SIZE];
+			char TempDefinitionStorage[MAX_BUF_SIZE];
+
+			// now this should be quick and simple, since we know we have valid lengths, just copy them into the buffers
+			// plain and simple
+
+			//debug
+
+			// do what the previous debug says...check to see if there is even another variable in the list. If there isnt, return -1
+			if (VariableStorageLength[LCV + 1] == NULL_ATTRIBUTE_LENGTH || LCV == 19)
+			{
+				//debug
+
+				return (-1);
+			}
+
+			// we are not at the end of the list, do the copy
+			// remember....LCV is at the PREVIOUS variable
+			strncpy(TempVariableStorage, VariableStorage[LCV + 1], VariableLength);
+			TempVariableStorage[VariableLength - 1] = '\0';
+			strncpy(Variable, TempVariableStorage, VariableLength);
+
+			strncpy(TempDefinitionStorage, VariableDefinitions[LCV + 1], DefinitionLength);
+			TempDefinitionStorage[DefinitionLength - 1] = '\0';
+			strncpy(VariableDefinition, TempDefinitionStorage, DefinitionLength);
+
+			return (0);
+		}
+	}
+	return (-2);
+}
+
+int sys_SaveVariable(char  *Variable, char  *Definition) {
+	char TempBuffer[MAX_BUF_SIZE]; // Temporary buffer for the user's input
+	int Length = strlen(Variable);
+	if ((Length < 1) || (Length >= MAX_BUF_SIZE))
+	{
+		printf("SaveVariable has failed: illegal length of buffer. (%d)! \n", Length);
+		return(-1);
+	}
+	if (!strncpy(TempBuffer, Variable, Length))
+	{
+		printf("SaveVariable has failed: copy_from_user() error \n");
+		return(-1);
+	}
+	TempBuffer[Length] = '\0';
+	int TempNum;
+	TempNum = 0;
+	bool DuplicateItem;
+	DuplicateItem = false;
+	while (VariableStorageLength[TempNum] != NULL_ATTRIBUTE_LENGTH
+		&& TempNum < 19 && !DuplicateItem)
+{
+		// while we're in this loop, lets check for a "duplicate" and update it
+                if (!(strcmp(VariableStorage[TempNum], TempBuffer)))
+			// if we made it here, that means we need to reassign the spot. since the name's
+			// the same, we only need to change the definition. Break so the number stops
+			// incrementing
+		{
+			DuplicateItem = true;
+		}
+
+		if (!DuplicateItem)
+			// havent found a duplicate or a free space. increment the counter
+			TempNum++;
+	}
+	if (TempNum == 19 && VariableStorageLength[TempNum] != NULL_ATTRIBUTE_LENGTH)
+{
+                return (-1);
+        }
+	VariableStorageLength[TempNum] = Length;
+	strncpy(VariableStorage[TempNum], TempBuffer, Length + 1);
+	Length = strlen(Definition);
+	if ((Length < 1) || (Length >= MAX_BUF_SIZE))
+{
+		return(-1);
+	}
+	if (!strncpy(TempBuffer, Definition, Length))
+	{
+		return(-1);
+	}
+	TempBuffer[Length] = '\0';
+	VariableDefinitionsLength[TempNum] = Length;
+
+	// now to copy the data over
+	strncpy(VariableDefinitions[TempNum], TempBuffer, Length + 1);
+
+	StoredVariables++;
+    return 0;
+}
+
+int sys_GetVariable(char  *VariableName, char  *VariableDefinition, int DefinitionLength) {
+	char TempBuffer[MAX_BUF_SIZE];
+	char DefinitionBuffer[MAX_BUF_SIZE];
+
+	int VariableLength = strlen(VariableName);
+	TempBuffer[VariableLength] = '\0';
+	int TempNum;
+	for(TempNum = 0; TempNum < StoredVariables; TempNum++) {
+        // need a temp buffer to store the stuff
+        char CurrentStoredVariable[MAX_BUF_SIZE];
+        strncpy(CurrentStoredVariable, VariableStorage[TempNum], VariableLength);
+
+        // ALWAYS null terminate it
+        CurrentStoredVariable[VariableLength] = '\0';
+
+        //debug
+
+        // remember, we still have the value stored into TempBuffer
+        if (!(strcmp(CurrentStoredVariable, TempBuffer))) {
+            // if you come into this if statement, theyre the same variable. Load in the variables into
+            // the appropriate buffers
+
+            // we have a valid definition length, we now know how many bytes to copy. copy it back to USER SPACE
+            strncpy(VariableDefinition, VariableDefinitions[TempNum], DefinitionLength);
+
+            // ALWAYS NULL TERMINATE....stupid bugs....
+            VariableDefinition[DefinitionLength - 1] = '\0';
+
+            // debug
+
+            // if you get here, the lengths are correct and the buffers have been loaded
+            return(0);
+        }
+    }
+
+    return(-1);
+}
+#endif
 
 static char* prompt;
 extern VARLIST* varlist;
@@ -75,6 +273,8 @@ void printTokenList(){
 int getVar(char* varname, char* value, size_t length) {
 #ifdef KERNEL_SUPPORT
     return syscall(__NR_GetVariable, varname, value, length) == 0;
+#elif defined(KERNEL_DEBUG)
+    return sys_GetVariable(varname, value, length) == 0;
 #else
     VARLIST* current = varlist;
     while(current) {
@@ -91,6 +291,8 @@ int getVar(char* varname, char* value, size_t length) {
 void addToVarList(char * variable, char * value){
 #ifdef KERNEL_SUPPORT
     syscall(__NR_SaveVariable, variable, value);
+#elif defined(KERNEL_DEBUG)
+    sys_SaveVariable(variable, value);
 #else
 	VARLIST * current = varlist;
 	int exists = 0;
@@ -119,6 +321,12 @@ void printVarlist(){
     char varname[LIMIT], vardef[LIMIT];
     varname[0] = '\0';
     while(syscall(__NR_NextVariable, varname, varname, LIMIT, vardef, LIMIT) == 0) {
+        printf("%s = %s\n", varname, vardef);
+    }
+#elif defined(KERNEL_DEBUG)
+    char varname[LIMIT], vardef[LIMIT];
+    varname[0] = '\0';
+    while(sys_NextVariable(varname, varname, LIMIT, vardef, LIMIT) == 0) {
         printf("%s = %s\n", varname, vardef);
     }
 #else
@@ -279,6 +487,12 @@ void sub_vars(char* str) {
     char varname[LIMIT], varval[LIMIT];
     varname[0] = '\0';
     while(syscall(__NR_NextVariable, varname, varname, LIMIT, varval, LIMIT) == 0) {
+        strsubst(str, varname, varval);
+    }
+#elif defined(KERNEL_DEBUG)
+    char varname[LIMIT], varval[LIMIT];
+    varname[0] = '\0';
+    while(sys_NextVariable(varname, varname, LIMIT, varval, LIMIT) == 0) {
         strsubst(str, varname, varval);
     }
 #else
