@@ -44,6 +44,7 @@ void addToTokenList(char* type, char* token, char* usage){
 	else if(strcmp(usage, "arg 0") == 0){
 		usage = "cmd";
 	}
+
     TOKENLIST* new_entry = malloc(sizeof(TOKENLIST));
     strncpy(new_entry->type, type, sizeof(new_entry->type));
     strncpy(new_entry->token, token, sizeof(new_entry->token));
@@ -278,7 +279,7 @@ void sub_vars(char* str) {
     char varname[LIMIT], varval[LIMIT];
     varname[0] = '\0';
     while(syscall(__NR_NextVariable, varname, varname, LIMIT, varval, LIMIT)) {
-        strsubst(str, var->variable, var->value);
+        strsubst(str, varname, varval);
     }
 #else
     VARLIST *var = varlist;
@@ -348,11 +349,6 @@ void runCommand(ARGLIST* arglist, int background) {
 	if((pid = fork()) == 0){
 		execvp(argv[0], argv);
 		exit(1);
-	/*	if(execve(argv[0], argv, vars) < 0){
-			printf("%s\n", argv[0]);
-			printf("%s: command not found\n", argv[0]);
-			exit(0);
-		} */
 	}
     if(background) {
         addToJobList(pid, argv[0]);
