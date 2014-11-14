@@ -369,5 +369,7 @@ void printCommandPrompt(void){
         printTokenList();
     }
     clearTokenList();
-	printf("%s", prompt);
+    if(isatty(STDIN_FILENO)) {
+        printf("%s", prompt);
+    }
 }
