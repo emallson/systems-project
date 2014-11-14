@@ -118,7 +118,7 @@ void printVarlist(){
 #ifdef KERNEL_SUPPORT
     char varname[LIMIT], vardef[LIMIT];
     varname[0] = '\0';
-    while(syscall(__NR_NextVariable, varname, varname, LIMIT, vardef, LIMIT)) {
+    while(syscall(__NR_NextVariable, varname, varname, LIMIT, vardef, LIMIT) == 0) {
         printf("%s = %s\n", varname, vardef);
     }
 #else
@@ -278,7 +278,7 @@ void sub_vars(char* str) {
 #ifdef KERNEL_SUPPORT
     char varname[LIMIT], varval[LIMIT];
     varname[0] = '\0';
-    while(syscall(__NR_NextVariable, varname, varname, LIMIT, varval, LIMIT)) {
+    while(syscall(__NR_NextVariable, varname, varname, LIMIT, varval, LIMIT) == 0) {
         strsubst(str, varname, varval);
     }
 #else
