@@ -57,15 +57,14 @@ asmlinkage int sys_SaveVariable(char __user *Variable, char __user *Definition) 
 	// some output to the kernel log so we can see what happens. Makes it easier for debugging....
 	printk(KERN_EMERG "Starting up the SaveVariable function. The Length of the user's buffer is: %d \n", Length);
 	
-	// check to make sure the length of the variable isnt larger than our buffer
-	if ((Length < 1) || (Length > MAX_BUF_SIZE)) 
+
+	if ((Length < 1) || (Length >= MAX_BUF_SIZE)) 
 	{
 		printk(KERN_EMERG "SaveVariable has failed: illegal length of buffer. (%d)! \n", Length);
 		return(-1);
 	}
 
 	// copy buff from user space into a kernel buffer
-	strncpy(TempBuffer, Variable, Length);
 	if (copy_from_user(TempBuffer, Variable, Length)) 
 	{
 		printk(KERN_EMERG "SaveVariable has failed: copy_from_user() error \n");
@@ -86,13 +85,32 @@ asmlinkage int sys_SaveVariable(char __user *Variable, char __user *Definition) 
 	// sift through the size of the variable length array and find out what's been assigned
 	int TempNum;
 	TempNum = 0;
-	while (VariableStorageLength[TempNum] != NULL_ATTRIBUTE_LENGTH
-		&& TempNum < 19)
-		TempNum++;
 
-        // check to see if the storage is absolutely full!
+	// this is used to check and see if we are reassigning
+	// a variable
+	bool DuplicateItem;
+	DuplicateItem = false;
+	while (VariableStorageLength[TempNum] != NULL_ATTRIBUTE_LENGTH
+		&& TempNum < 19 && !DuplicateItem)
+	{
+		// while we're in this loop, lets check for a "duplicate" and update it
+                if (!(strcmp(VariableStorage[TempNum], TempBuffer)))
+			// if we made it here, that means we need to reassign the spot. since the name's
+			// the same, we only need to change the definition. Break so the number stops
+			// incrementing
+		{
+			printk(KERN_EMERG "Duplicate name found. Updating current name. Duplicate: %s \n", TempBuffer);
+			DuplicateItem = true;
+		}
+
+		if (!DuplicateItem)
+			// havent found a duplicate or a free space. increment the counter
+			TempNum++;
+	}
+
+	// check to see if the storage is absolutely full!
 	if (TempNum == 19 && VariableStorageLength[TempNum] != NULL_ATTRIBUTE_LENGTH)
-        {
+	{
                 printk(KERN_EMERG "Failed to add %s. Global variable list is full....", Variable);
                 return (-1);
         }
@@ -118,7 +136,7 @@ asmlinkage int sys_SaveVariable(char __user *Variable, char __user *Definition) 
 	// find the length of the definition. Reuse Length
 	Length = strlen(Definition);
 
-	if ((Length < 1) || (Length > MAX_BUF_SIZE)) 
+	if ((Length < 1) || (Length >= MAX_BUF_SIZE)) 
 	{
 		printk(KERN_EMERG "SaveVariable has failed: illegal length of definitioin buffer. (%d)! \n", Length);
 		return(-1);

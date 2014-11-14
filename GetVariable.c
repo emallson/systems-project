@@ -43,7 +43,7 @@ asmlinkage int sys_GetVariable(char __user *VariableName, char __user *VariableD
 	}
 	
 	// ALWAYS null terminate the stupid string.....another 2 hours of compiling because of this
-	TempBuffer[VariableLength] = '\0';
+	TempBuffer[VariableLength - 1] = '\0';
 
 	//debug
 	printk(KERN_EMERG "The current TempBuffer: %s \n", TempBuffer);
@@ -62,7 +62,7 @@ asmlinkage int sys_GetVariable(char __user *VariableName, char __user *VariableD
 		strncpy(CurrentStoredVariable, VariableStorage[TempNum], VariableLength);
 
 		// ALWAYS null terminate it
-		CurrentStoredVariable[VariableLength] = '\0';
+		CurrentStoredVariable[VariableLength - 1] = '\0';
 
 		//debug
 		printk(KERN_EMERG "What was temporarily copied: %s \n", CurrentStoredVariable);
@@ -77,7 +77,7 @@ asmlinkage int sys_GetVariable(char __user *VariableName, char __user *VariableD
 			copy_to_user(VariableDefinition, VariableDefinitions[TempNum], DefinitionLength);
 
 			// ALWAYS NULL TERMINATE....stupid bugs....
-			VariableDefinition[DefinitionLength] = '\0';
+			VariableDefinition[DefinitionLength - 1] = '\0';
 
 			// debug
 			printk(KERN_EMERG "Varable was copied to CurrentStoredVariable. The Value is: %s \n", CurrentStoredVariable);

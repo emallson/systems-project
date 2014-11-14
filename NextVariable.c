@@ -58,7 +58,7 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 	copy_from_user(PreviousBuffer, PreviousName, PreviousNameSize);
 
 	// Null terminate. Holy crap i missed alot of these...
-	PreviousBuffer[PreviousNameSize] = '\0';
+	PreviousBuffer[PreviousNameSize - 1] = '\0';
 
 	//debug
 	printk(KERN_EMERG "The variable was saved into kernel space. What was saved: %s \n", PreviousBuffer);
@@ -91,11 +91,11 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 		
 		// do the copy!!
 		strncpy(TempVariableStorage, VariableStorage[0], VariableLength);
-		TempVariableStorage[VariableLength] = '\0';
+		TempVariableStorage[VariableLength - 1] = '\0';
 		copy_to_user(Variable, TempVariableStorage, VariableLength);
 
 		strncpy(TempDefinitionStorage, VariableDefinitions[0], DefinitionLength);
-		TempDefinitionStorage[DefinitionLength] = '\0';
+		TempDefinitionStorage[DefinitionLength - 1] = '\0';
 		copy_to_user(VariableDefinition, TempDefinitionStorage, DefinitionLength);
 
 		return (0);
@@ -138,11 +138,11 @@ asmlinkage int sys_NextVariable(char __user *PreviousName, char __user *Variable
 			// we are not at the end of the list, do the copy
 			// remember....LCV is at the PREVIOUS variable
 			strncpy(TempVariableStorage, VariableStorage[LCV + 1], VariableLength);
-			TempVariableStorage[VariableLength] = '\0';
+			TempVariableStorage[VariableLength - 1] = '\0';
 			copy_to_user(Variable, TempVariableStorage, VariableLength);
 
 			strncpy(TempDefinitionStorage, VariableDefinitions[LCV + 1], DefinitionLength);
-			TempDefinitionStorage[DefinitionLength] = '\0';
+			TempDefinitionStorage[DefinitionLength - 1] = '\0';
 			copy_to_user(VariableDefinition, TempDefinitionStorage, DefinitionLength);
 
 			return (0);
