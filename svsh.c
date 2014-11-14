@@ -11,9 +11,13 @@
 #include "svsh.h"
 #include "parser.tab.h"
 
+#define __NR_SaveVariable 315
+#define __NR_GetVariable 316
+#define __NR_NextVariable 317
+
 static char* prompt;
 extern VARLIST* varlist;
-extern TOKENLIST* tokenlist; 
+extern TOKENLIST* tokenlist;
 static int argcount = 0;
 typedef struct pidlist_node_struct {
     pid_t pid;
@@ -29,50 +33,69 @@ typedef struct pidlist_struct {
 pidlist joblist;
 
 void svshInit(){
-    	joblist.head = joblist.tail = NULL;
-    	joblist.length = 0;
+    joblist.head = joblist.tail = NULL;
+    joblist.length = 0;
 	prompt = "svsh > ";
 }
 
-void printCommandPrompt(void){
-	printf("%s", prompt);
-}
 void addToTokenList(char* type, char* token, char* usage){
 	if(strcmp(usage, "variable_name") == 0)
 		token = strtok(token, " ");
 	else if(strcmp(usage, "arg 0") == 0){
-		usage = "cmd"; 
+		usage = "cmd";
 	}
-        TOKENLIST* new_entry = malloc(sizeof(TOKENLIST));
-        strncpy(new_entry->type, type, sizeof(new_entry->type));
-        strncpy(new_entry->token, token, sizeof(new_entry->token));
-        strncpy(new_entry->usage, usage, sizeof(new_entry->usage));
-        new_entry->next  = tokenlist;
-        tokenlist = new_entry;
+    TOKENLIST* new_entry = malloc(sizeof(TOKENLIST));
+    strncpy(new_entry->type, type, sizeof(new_entry->type));
+    strncpy(new_entry->token, token, sizeof(new_entry->token));
+    strncpy(new_entry->usage, usage, sizeof(new_entry->usage));
+    new_entry->next  = tokenlist;
+    tokenlist = new_entry;
 }
-void clearTokenList(TOKENLIST* head){
-	TOKENLIST* current = head->next; 
-	TOKENLIST* next_item; 
+
+void clearTokenList(){
+	TOKENLIST* current = tokenlist;
+	TOKENLIST* next_item;
 	while(current != NULL){
-		next_item = current->next; 
-		free(current); 
-		current = next_item; 
+		next_item = current->next;
+		free(current);
+		current = next_item;
 	}
-	head->next = NULL; 
+    tokenlist = NULL;
 }
+
 void printTokenList(){
         TOKENLIST* current = tokenlist;
         while(current != NULL){
                 printf("Token Type: %15s\t Token: %15s\t Usage: %15s\n",current->type, current->token, current->usage);
-		current = current->next;
+                current = current->next;
         }
 }
+
+int getVar(char* varname, char* value, size_t length) {
+#ifdef KERNEL_SUPPORT
+    return syscall(__NR_GetVariable, varname, value, length) == 0;
+#else
+    VARLIST* current = varlist;
+    while(current) {
+        if(strncmp(current->variable, varname, LIMIT) == 0) {
+            strncpy(value, current->value, length);
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
+#endif
+}
+
 void addToVarList(char * variable, char * value){
+#ifdef KERNEL_SUPPORT
+    syscall(__NR_SaveVariable, variable, value);
+#else
 	VARLIST * current = varlist;
 	int exists = 0;
 	while(current !=NULL && !exists){
-		if(strcmp(current->variable, value) == 0){
-			strncpy(current->value, value, sizeof(current->	value));
+		if(strcmp(current->variable, variable) == 0){
+			strncpy(current->value, value, LIMIT);
 			exists = 1;
 		}
 		current = current->next;
@@ -87,14 +110,23 @@ void addToVarList(char * variable, char * value){
 			varlist->prev = new_entry;
 		varlist = new_entry;
 	}
+#endif
 }
 
 void printVarlist(){
+#ifdef KERNEL_SUPPORT
+    char varname[LIMIT], vardef[LIMIT];
+    varname[0] = '\0';
+    while(syscall(__NR_NextVariable, varname, varname, LIMIT, vardef, LIMIT)) {
+        printf("%s = %s\n", varname, vardef);
+    }
+#else
 	VARLIST * current = varlist;
 	while(current != NULL){
 		printf("%s = %s\n", current->variable, current->value);
 		current = current->next;
 	}
+#endif
 }
 
 void addToJobList(pid_t pid, char* name) {
@@ -128,17 +160,26 @@ void removeJob(pidlist_node* job, pidlist_node* prev) {
     joblist.length--;
 }
 
+/* kills ALL jobs */
+void killJobs() {
+    pidlist_node* current = joblist.head;
+    while(current != NULL) {
+        kill(current->pid, SIGKILL);
+        current = current->next;
+    }
+}
+
 void pprint_state(int state) {
     if(WIFEXITED(state)) {
         printf("[Exited: %d]", WEXITSTATUS(state));
     }
     if(WIFSIGNALED(state)) {
         printf("[Signaled: %d", WTERMSIG(state));
-        #ifdef WCOREDUMP
+#ifdef WCOREDUMP
         if(WCOREDUMP(state)) {
             printf(" with core dump");
         }
-        #endif
+#endif
         printf("]");
     }
     /* right now this can only happen if an external command is run to stop the
@@ -181,6 +222,7 @@ void builtInCmd(int command, char* string, char* variable){
 	char cwd[1024];
 	switch(command){
 		case(BYE):
+            killJobs();
 			exit(0);
 			break;
 		case(DEFPROMPT):
@@ -231,8 +273,23 @@ void strsubst(char* source, char* sub, char* repl) {
     free(tmp);
 }
 
+void sub_vars(char* str) {
+#ifdef KERNEL_SUPPORT
+    char varname[LIMIT], varval[LIMIT];
+    varname[0] = '\0';
+    while(syscall(__NR_NextVariable, varname, varname, LIMIT, varval, LIMIT)) {
+        strsubst(str, var->variable, var->value);
+    }
+#else
+    VARLIST *var = varlist;
+    while(var != NULL) {
+        strsubst(str, var->variable, var->value);
+        var = var->next;
+    }
+#endif
+}
+
 char** build_argv(ARGLIST* arglist) {
-    VARLIST* head = varlist, *var = varlist;
 	ARGLIST* arg_it = arglist;
 	int arg_size = 0;
 
@@ -246,11 +303,7 @@ char** build_argv(ARGLIST* arglist) {
 	int i = 0;
 	while(arg_it != NULL){
 		argv[i] = arg_it->args;
-        while(var != NULL) {
-            strsubst(argv[i], var->variable, var->value);
-            var = var->next;
-        }
-        var = head;
+        sub_vars(argv[i]);
 		arg_it = arg_it->next;
 		i++;
 	}
@@ -310,4 +363,15 @@ void runCommand(ARGLIST* arglist, int background) {
         }
     }
 	free(argv);
+}
+
+void printCommandPrompt(void){
+    char stval[LIMIT];
+
+    if(getVar("$ShowTokens", stval, LIMIT) &&
+       strncmp("1", stval, LIMIT) == 0) {
+        printTokenList();
+    }
+    clearTokenList();
+	printf("%s", prompt);
 }
