@@ -21,8 +21,8 @@ p3syscalls/SaveVariable.c - definition of the SaveVariable system call and
 
 svsh/Globals.h - declaring globals vatiables the shell and kernel calls use
 svsh/makefile - makefile to compile svsh
-svsh/parser.y - yacc/bison specs to create shell parser
-svsh/scanner.l - flex/lex specs to create shell scanner
+svsh/parser.y - yacc/bison file to create shell parser
+svsh/scanner.l - lex/flex file to create shell scanner
 svsh/svsh.c - c file defining shell functions
 svsh/svsh.h - header file for shell functions
 svsh/svsh_structs.h - definition of ARGLIST, VARLIST, TOKENLIST structs used by 
