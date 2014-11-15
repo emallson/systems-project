@@ -18,6 +18,7 @@ p3syscalls/Globals.h
 p3syscalls/NextVariable.c
 p3syscalls/SaveVariable.c
 
+svsh/Globals.h
 svsh/makefile
 svsh/parser.y
 svsh/scanner.l
