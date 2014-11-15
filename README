@@ -13,16 +13,17 @@ Files:
 README - README file (this file)
 documentation.txt - Documentation file
 
-p3syscalls/GetVariable.c
-p3syscalls/Globals.h
-p3syscalls/NextVariable.c
-p3syscalls/SaveVariable.c
+p3syscalls/GetVariable.c - definition of the GetVariable system call (316)
+p3syscalls/Globals.h - declaring globals vatiables the shell and kernel calls use
+p3syscalls/NextVariable.c - definition of the NextVariable system call (317)
+p3syscalls/SaveVariable.c - definition of the SaveVariable system call and 
+	variable storage globals (315)
 
-svsh/Globals.h
-svsh/makefile
-svsh/parser.y
-svsh/scanner.l
-svsh/shell.c
-svsh/svsh.c
-svsh/svsh.h
-svsh/svsh_structs.h
+svsh/Globals.h - declaring globals vatiables the shell and kernel calls use
+svsh/makefile - makefile to compile svsh
+svsh/parser.y - yacc/bison specs to create shell parser
+svsh/scanner.l - flex/lex specs to create shell scanner
+svsh/svsh.c - c file defining shell functions
+svsh/svsh.h - header file for shell functions
+svsh/svsh_structs.h - definition of ARGLIST, VARLIST, TOKENLIST structs used by 
+	the shell
