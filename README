@@ -10,7 +10,8 @@ Hampton Young
 Turnin — 11/16/2014
 
 Files:
-README - This file
+README - README file (this file)
+documentation.txt - Documentation file
 
 p3syscalls/GetVariable.c
 p3syscalls/Globals.h
