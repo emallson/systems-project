@@ -10,17 +10,17 @@ Hampton Young
 Turnin — 11/16/2014
 
 Files:
-GetVariable.c
-Globals.h
-makefile
-NextVariable.c
-parser.y
-README
-SaveVariable.c
-scanner.l
-shell.c
-svsh.c
-svsh.h
-svsh_structs.h
-syscall_64.tbl
-syscalls.h
+README - This file
+
+p3syscalls/GetVariable.c
+p3syscalls/Globals.h
+p3syscalls/NextVariable.c
+p3syscalls/SaveVariable.c
+
+svsh/makefile
+svsh/parser.y
+svsh/scanner.l
+svsh/shell.c
+svsh/svsh.c
+svsh/svsh.h
+svsh/svsh_structs.h
