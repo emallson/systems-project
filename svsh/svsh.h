@@ -1,5 +1,6 @@
 #ifndef _SVSH_H_
 #define _SVSH_H_
+#define KERNEL_SUPPORT
 
 #include <stdlib.h>
 
