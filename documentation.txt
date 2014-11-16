@@ -24,7 +24,7 @@ We implemented the shared variables by doing variable storage them in the kernel
 a 2D array and accessing variable information with system calls in the shell.
 
 Limitations / Features: 
--	The shell only stores 20 variable (as the assignment specified)s
+-	The shell only stores 20 variable (as the assignment specified)
 -	Variables can hold no more than 255 characters (as the assignment 
 specified)
 -	
