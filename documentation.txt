@@ -19,13 +19,14 @@ forks off a new process to run the new program. The shell resumes either after t
 new process is forked off (if the user specified that the program was to run in 
 the background) or after it completes (for foreground programs). 
 
-We implemented the shared variables by doing variable storage them in the kernel 
-in a 2D array and accessing variable information with system calls in the shell.
+We implemented the shared variables by doing variable storage in the kernel in a 
+2D array and accessing variable information with system calls in the shell.
 A second array in the kernel stores the length of the values (with a -2 length
 indicating an unset or null variable).
 
-In the shell, we stored the lists of variables, arguments, and tokens  as linked 
-lists. 
+In the shell, we stored the lists of variables, arguments, and tokens as linked 
+lists. For testing, we defined functions to either use those linked lists apart
+from the kernel calls or else to use the kernel calls for the final product.
 
 Limitations / Features: 
 -	The shell only stores 20 variables (as the assignment specified)
