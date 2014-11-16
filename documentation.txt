@@ -24,6 +24,9 @@ in a 2D array and accessing variable information with system calls in the shell.
 A second array in the kernel stores the length of the values (with a -2 length
 indicating an unset or null variable).
 
+In the shell, we stored the lists of variables, arguments, and tokens  as linked 
+lists. 
+
 Limitations / Features: 
 -	The shell only stores 20 variables (as the assignment specified)
 - 	The assignment specified that all input lines are less than 255 characters
@@ -32,5 +35,7 @@ long. Therefore:
 		- Beyond 256 characters, variables get truncated
 	-	Variable names can hold no more than 255 characters
 		- Beyond 255 characters, variable names get truncated
+-	Because of the way we stored tokens, they are going to be printed out in 
+reverse order from how they were defined.
 
 
