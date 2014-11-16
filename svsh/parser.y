@@ -50,14 +50,18 @@ prompt:
 	;
 command:
 	DEFPROMPT WORD		{
-					addToTokenList("word", $2, "anytext");
-					addToTokenList("keyword", "defprompt", "defprompt");
-					builtInCmd(DEFPROMPT, $2, NULL);
+					printf("Error: Prompt must be a string; e.g. defprompt 'prompt < '\n"); 
 				}
         |DEFPROMPT STRING       {
                                         addToTokenList("string", $2, "anytext");
                                         addToTokenList("keyword", "defprompt", "defprompt");
 					builtInCmd(DEFPROMPT, $2, NULL);
+                                }
+	|VARIABLE EQUAL STRING arg{
+                                        printf("Variable assignment should be of the form Variable = Definiton\n");
+                                }
+	|VARIABLE EQUAL WORD arg{
+                                        printf("Variable assignment should be of the form Variable = Definiton\n");
                                 }
 	|VARIABLE EQUAL WORD    {
 					addToTokenList("word", $3, "variable_def");
@@ -76,27 +80,31 @@ command:
 					addToTokenList("keyword", "cd", "change directory");
 					builtInCmd(CD, $2, NULL);
 				}
+	|CD WORD arg		{printf("The cd command must be in the form 'cd location'\n");}
 	|BYE			{builtInCmd(BYE, NULL, NULL);}
+	|BYE arg		{printf("The command 'bye' should only be typed if you wish to exit!\n");}
 	|COMMENT arglist 	{
 				 	yyerrok;
 				 	yyclearin;
+					printCommandPrompt();
 				}
 	|LISTJOBS 		{
-        addToTokenList("keyword", "listjobs", "listjobs");
-        printJobList();
-     }
+        				addToTokenList("keyword", "listjobs", "listjobs");
+				        printJobList();
+    				}
+	|LISTJOBS arg		{printf("Listjobs must be singularly typed to list current jobs!\n");}
 
 	|ASSIGNTO VARIABLE arglist {
-        addToTokenList("variable", $2, "destination");
-        addToTokenList("keyword", "assignto", "assignto");
-        assignCommand($2, $3);
-    }
+				        addToTokenList("variable", $2, "destination");
+				        addToTokenList("keyword", "assignto", "assignto");
+				        assignCommand($2, $3);
+   				}
 
 	|RUN arglist BG 	{
 					runCommand($2, 1);
 				}
 	|arglist BG 		{
-        runCommand($1, 1);
+				        runCommand($1, 1);
 				}
 	|RUN arglist 		{
 					argcount = 0;
