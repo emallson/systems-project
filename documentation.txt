@@ -3,29 +3,34 @@ documentation.txt
 CS 485-002 Project 3: The Shared Variable Shell
 
 In this project, we created a new Linux shell that allows a user to interactively 
-execute Unix programs. The shell functions a much like other shells (like bash) by 
+execute Unix programs. The shell functions much like other shells (like bash) by 
 taking commands from a user and executing the corresponding programs. It also 
 allows users to set variables for later use. This shell also has the feature of
-saving variables in the kernel that can be used in other concurrent instances of 
+saving variables into the kernel that can be used in other concurrent instances of 
 the shell. 
 
 The shell itself consists of a scanner, a parser, and the main shell program. The 
 scanner uses a lex/flex file to create a program to scan information from the user 
 and split it into tokens. The parser uses a yacc/bison file to create a program to 
-take those tokens and pass them to the main shell program triggering the proper 
-function in the main shell program. The main shell program has a list of functions 
-set up to handle the requests passed on by the parser. When needing to execute a 
-program, the shell forks off a new process to run the new program. The shell 
-resumes either after the new process is forked off (if the user specified that the 
-program was to run in the background) or after it completes (for foreground 
-programs). 
+take those tokens and pass them along, triggering the proper function in the main 
+shell program. The main shell program has a list of functions set up to handle the 
+requests passed in from the parser. When it needs to execute a program, the shell 
+forks off a new process to run the new program. The shell resumes either after the 
+new process is forked off (if the user specified that the program was to run in 
+the background) or after it completes (for foreground programs). 
 
-We implemented the shared variables by doing variable storage them in the kernel in 
-a 2D array and accessing variable information with system calls in the shell.
+We implemented the shared variables by doing variable storage them in the kernel 
+in a 2D array and accessing variable information with system calls in the shell.
+A second array in the kernel stores the length of the values (with a -2 length
+indicating an unset or null variable).
 
 Limitations / Features: 
--	The shell only stores 20 variable (as the assignment specified)
--	Variables can hold no more than 255 characters (as the assignment 
-specified)
--	
+-	The shell only stores 20 variables (as the assignment specified)
+- 	The assignment specified that all input lines are less than 255 characters
+long. Therefore: 
+	-	Variables can hold no more than 255 characters (256 with the '\0')
+		- Beyond 256 characters, variables get truncated
+	-	Variable names can hold no more than 255 characters
+		- Beyond 255 characters, variable names get truncated
+
 
