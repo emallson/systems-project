@@ -47,10 +47,28 @@ prompt:
 				yyclearin;
 				printCommandPrompt();
 			}
+	|NEWLINE	{
+				printf("No input detected!\n");
+				printCommandPrompt();  
+			}
 	;
 command:
 	DEFPROMPT WORD		{
-					printf("Error: Prompt must be a string; e.g. defprompt 'prompt < '\n"); 
+					addToTokenList("word", $2, "anytext"); 
+					addToTokenList("keyword", "defprompt", "defprompt");
+					printf("Error: Prompt must be a string; e.g. defprompt \"prompt > \"\n"); 
+				}
+	|DEFPROMPT WORD arg	{
+					argcount = 1; //make sure the usage is never 'cmd'
+					addToTokenList("word", $2, "anytext"); 
+					addToTokenList("keyword", "defprompt", "defprompt");
+					printf("Error: Prompt must be a string; e.g. defprompt \"prompt > \"\n");
+				}
+	|DEFPROMPT STRING arg   {
+					argcount = 1; //make sure the usage is never 'cmd'
+					addToTokenList("string", $2, "anytext");
+					addToTokenList("keyword", "defprompt", "defprompt");
+					printf("Error: Prompt must be a string; e.g. defprompt \"prompt > \"\n");
 				}
         |DEFPROMPT STRING       {
                                         addToTokenList("string", $2, "anytext");
@@ -58,9 +76,17 @@ command:
 					builtInCmd(DEFPROMPT, $2, NULL);
                                 }
 	|VARIABLE EQUAL STRING arg{
+					argcount = 1; //make sure the usage is never cmd
+					addToTokenList("string", $3, "variable_def"); 
+					addToTokenList("metachar", "=", "assignment");
+                                        addToTokenList("word", $1, "variable_name");
                                         printf("Variable assignment should be of the form Variable = Definiton\n");
                                 }
 	|VARIABLE EQUAL WORD arg{
+					argcount = 1; //make sure the usage is never cmd
+					addToTokenList("word", $3, "variable_def");
+                                        addToTokenList("metachar", "=", "assignment");
+                                        addToTokenList("word", $1, "variable_name");
                                         printf("Variable assignment should be of the form Variable = Definiton\n");
                                 }
 	|VARIABLE EQUAL WORD    {
@@ -80,10 +106,23 @@ command:
 					addToTokenList("keyword", "cd", "change directory");
 					builtInCmd(CD, $2, NULL);
 				}
-	|CD WORD arg		{printf("The cd command must be in the form 'cd location'\n");}
-	|BYE			{builtInCmd(BYE, NULL, NULL);}
-	|BYE arg		{printf("The command 'bye' should only be typed if you wish to exit!\n");}
+	|CD WORD arg		{
+					argcount = 1; //make sure the usage is never cmd
+					addToTokenList("word", $2, "directory");
+                                        addToTokenList("keyword", "cd", "change directory");
+					printf("The cd command must be in the form 'cd location'\n");
+				}
+	|BYE			{
+					addToTokenList("keyword", "bye", "exit"); 
+					builtInCmd(BYE, NULL, NULL);
+				}
+	|BYE arg		{
+					argcount = 1; //make sure the usage is never cmd
+					addToTokenList("keyword", "bye", "exit"); 
+					printf("The command 'bye' should only be typed if you wish to exit!\n");}
 	|COMMENT arglist 	{
+					argcount = 0; 
+					addToTokenList("metachar", "#", "comment"); 
 				 	yyerrok;
 				 	yyclearin;
 					printCommandPrompt();
@@ -92,18 +131,27 @@ command:
         				addToTokenList("keyword", "listjobs", "listjobs");
 				        printJobList();
     				}
-	|LISTJOBS arg		{printf("Listjobs must be singularly typed to list current jobs!\n");}
+	|LISTJOBS arg		{
+					argcount = 0; 
+					addToTokenList("keyword", "listjobs", "listjobs");
+					printf("Listjobs must be singularly typed to list current jobs!\n");}
 
 	|ASSIGNTO VARIABLE arglist {
+					argcount = 1; 
 				        addToTokenList("variable", $2, "destination");
 				        addToTokenList("keyword", "assignto", "assignto");
 				        assignCommand($2, $3);
    				}
 
 	|RUN arglist BG 	{
+					argcount = 0; 
+					addToTokenList("background", "<bg>", "background process");
+					addToTokenList("keyword", "run", "run");  
 					runCommand($2, 1);
 				}
 	|arglist BG 		{
+					argcount = 0; 
+					addToTokenList("background", "<bg>", "background process"); 
 				        runCommand($1, 1);
 				}
 	|RUN arglist 		{
